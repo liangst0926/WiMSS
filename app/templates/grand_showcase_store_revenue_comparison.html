@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}Grand Showcase Store Revenue Comparison{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<h1>Result</h1>
+<h5>Grand Showcase Store Revenue</h5>
+<table border="1">
+  <thead>
+    <tr>
+      <th>Year</th>
+      <th>Count</th>
+      <th>Minimum</th>
+      <th>Average</th>
+      <th>Maximum</th>
+      <th>Total</th>
+  </thead>
+  <tbody>
+    {% for row in result[0] %}
+    <tr>
+      {% for d in row %}
+      <td>{{ d }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table> 
+<h5>Regular Store Revenue</h5>
+<table border="1">
+  <thead>
+    <tr>
+      <th>Year</th>
+      <th>Count</th>
+      <th>Minimum</th>
+      <th>Average</th>
+      <th>Maximum</th>
+      <th>Total</th>
+  </thead>
+  <tbody>
+    {% for row in result[1] %}
+    <tr>
+      {% for d in row %}
+      <td>{{ d }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

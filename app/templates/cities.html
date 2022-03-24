@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Cities{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <table border="1">
+    <thead>
+    <tr>
+      <th>City</th>
+      <th>State</th>
+      <th>Population</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in cities %}
+      <tr>
+        {% for d in row %}
+	  {% if loop.index == 3 and session.get('user_type') == 'marketing_user' %}
+	    <td><a href="{{ url_for('city.update_city_population', state=row[1], city_name=row[0]) }}">{{ d }}</a></td>
+	  {% else %}
+            <td>{{ d }}</td>
+	  {% endif %}
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

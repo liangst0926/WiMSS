@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Store Revenue by Year by State{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <h1>Select State</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>State</th>
+    </thead>
+    <tbody>
+    {% for row in summary %}
+      <tr>
+        {% for d in row %}
+	  {% if loop.index == 1 %}
+	    <td><a href="{{ url_for('store_revenue_by_year_by_state.state_report', state=d) }}">{{ d }}</a></td>
+	  {% else %}
+            <td>{{ d }}</td>
+	  {% endif %}
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+<h1>Report</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>State</th>
+      <th>Store Number</th>
+      <th>Street Address</th>
+      <th>City Name</th>
+      <th>Sold Year</th>
+      <th>Revenue</th>
+    </thead>
+    <tbody>
+    {% for row in details %}
+      <tr>
+        {% for d in row %}
+          <td>{{ d }}</td>
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

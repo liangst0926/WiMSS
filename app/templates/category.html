@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Category Report{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <h1>Result</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>Category_Name</th>
+      <th>Total_Number_of_Products</th>
+      <th>Ave_Retail_Price</th>
+      <th>Min_Retail_Price</th>
+      <th>Max_Retail_Price</th>
+    </thead>
+    <tbody>
+    {% for row in summary %}
+      <tr>
+        {% for d in row %}
+          <td>{{ d }}</td>
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

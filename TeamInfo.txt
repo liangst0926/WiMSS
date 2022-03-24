@@ -1,0 +1,293 @@
+app/sql/*.sql directory contains all sql queries.
+
+Report 0: summary.sql (it also contains the sql code for updating city population) 
+
+SELECT COUNT(*) FROM City;
+SELECT COUNT(*) FROM Store;
+SELECT COUNT(*) FROM Store WHERE GS_boolean = 1;
+SELECT COUNT(*) FROM Store INNER JOIN Manage ON Store.store_number = Manage.store_number WHERE Manage.user_name = %s;
+SELECT COUNT(*) FROM Manufacturer;
+SELECT COUNT(*) FROM Product;
+SELECT COUNT(*) FROM SpecialSavingsDay;
+SELECT city_name AS City, state AS State, city_population AS Population FROM City;
+SELECT * FROM City WHERE state = %s AND city_name = %s;
+UPDATE City SET city_population = %s WHERE city_name = %s AND state = %s;
+
+
+Report 1. Manufacturers_product.sql
+
+SELECT
+  Manufacturer.manufacturer_name AS ManufacturerName,
+  COUNT(PID) AS TotalNumberofProducts,
+  AVG(retail_price) AS AverageRetailPrice,
+  MIN(retail_price) AS MinimumNonDiscountedRetailPrice,
+  MAX(retail_price) AS MaximumNonDiscountedRetailPrice
+FROM
+  Product RIGHT JOIN Manufacturer ON
+  Product.manufacturer_name = Manufacturer.manufacturer_name
+GROUP BY Manufacturer.manufacturer_name
+ORDER BY AVG(retail_price) DESC
+LIMIT 100;
+SELECT
+  Manufacturer.manufacturer_name AS ManufacturerName,
+  Product.PID AS ProductID,
+  Product.product_name AS ProductName,
+  Product.retail_price AS NonDiscountedPrice,
+  GROUP_CONCAT(DISTINCT Belong.category_name) AS Category
+FROM
+  Product RIGHT JOIN Manufacturer ON
+  Product.manufacturer_name = Manufacturer.manufacturer_name
+  LEFT JOIN Belong ON Product.PID = Belong.PID
+WHERE Manufacturer.manufacturer_name = %s
+GROUP BY Product.PID
+ORDER BY Product.retail_price DESC;
+
+Report 2: Category.sql
+
+SELECT
+  Category.category_name AS CategoryName,
+  COUNT(Product.PID) AS TotalNumberofProducts,
+  AVG(Product.retail_price) AS AverageRetailPrice,
+  MIN(Product.retail_price) AS MinimumRetailPrice,
+  MAX(Product.retail_price) AS MaximumRetailPrice
+
+FROM
+  Category LEFT JOIN Belong ON
+  Category.category_name = Belong.category_name
+  LEFT JOIN Product ON Product.PID = Belong.PID
+
+GROUP BY Category.category_name
+ORDER BY Category.category_name ASC;
+
+Report 3: actvspredict_revenue_couch_soft.sql
+
+WITH couch_sofa_revenue AS (
+SELECT 
+Product.PID AS ProductID, 
+Product.product_name AS ProductName,
+Product.retail_price AS ProductRetailPrice,
+SUM(Sold.quantity_sold) AS TotalUnitsSold,
+SUM(
+CASE WHEN Sold.calendar_date = OnSale.calendar_date 
+THEN Sold.quantity_sold ELSE 0 END) AS TotalUnitsSoldWithDiscount,
+SUM(
+CASE WHEN Sold.calendar_date <> OnSale.calendar_date
+THEN Sold.quantity_sold ELSE 0 END) AS TotalUnitsSoldRetailPrice,
+SUM(
+CASE WHEN Sold.calendar_date = OnSale.calendar_date
+THEN OnSale.discount_price * Sold.quantity_sold 
+ELSE Product.retail_price * Sold.quantity_sold END) AS ActualRevenue,
+SUM(
+CASE WHEN Sold.calendar_date = OnSale.calendar_date
+THEN Product.retail_price * 0.75 * Sold.quantity_sold 
+ELSE Product.retail_price * Sold.quantity_sold END) AS PredictedRevenue
+
+FROM 
+Category JOIN Belong ON 
+Category.category_name = Belong.category_name AND Category.category_name = 'COUCHES AND SOFAS'
+JOIN Product ON Product.PID = Belong.PID
+JOIN Sold ON Sold.PID = Product.PID
+LEFT JOIN OnSale ON Sold.PID = OnSale.PID 
+GROUP BY Product.PID
+)
+
+SELECT ProductID, ProductName, ProductRetailPrice, TotalUnitsSold, TotalUnitsSoldWithDiscount, TotalUnitsSoldRetailPrice, ActualRevenue, PredictedRevenue, (PredictedRevenue - ActualRevenue) as RevenueDifference
+FROM couch_sofa_revenue
+WHERE (PredictedRevenue - ActualRevenue) > 5000.00 || (PredictedRevenue - ActualRevenue) < -5000.00
+ORDER BY RevenueDifference DESC; 
+
+Report 4: Store_revenue_by_year_by_state.sql
+
+SELECT DISTINCT state FROM city Order by state;
+SELECT
+state, store_number, street_address, city_name, YEAR(Sold.calendar_date) as soldyear,
+SUM(CASE WHEN discount_price is NULL
+THEN retail_price * quantity_sold *((100- IFNULL (percent_discount, 0))/100)
+ELSE discount_price * quantity_sold*((100- IFNULL (percent_discount, 0))/100) END) AS Revenue
+FROM
+Sold natural Join Store natural Join Product
+LEFT JOIN OnSale ON OnSale.calendar_date= Sold.calendar_date AND OnSale.PID= Sold.PID
+LEFT JOIN SpecialSavingsDay ON SpecialSavingsDay.calendar_date = Sold.calendar_date
+WHERE state = %s
+GROUP BY store_number, YEAR (calendar_date)
+ORDER BY YEAR(Sold.calendar_date) ASC, Revenue DESC;
+
+Report 5: outdoor_furniture_on_groundhog_day.sql
+
+SELECT Year1 AS Year, TotalNumSold, AveNumSold, GroundhogSold
+FROM
+(SELECT Year AS Year1, SUM(quantity_sold) AS TotalNumSold, (SUM(quantity_sold)/365) AS AveNumSold
+FROM
+(SELECT YEAR(calendar_date) AS Year, quantity_sold FROM sold Natural JOIN belong WHERE category_name = %s ) As table1
+GROUP BY Year
+ORDER BY Year) AS table2
+LEFT JOIN
+(SELECT Year AS Year2, SUM(quantity_sold) AS GroundhogSold
+FROM
+(SELECT YEAR(calendar_date) AS Year, quantity_sold FROM sold Natural JOIN belong WHERE category_name = %s AND MONTH(calendar_date) = 2 AND DAY(calendar_date) = 2) AS table3
+GROUP BY Year
+ORDER BY Year) AS table4
+ON table2.Year1 = table4.Year2;
+
+
+
+Report 6: state_with_highest_volume_for_each_category.sql
+
+SELECT DISTINCT(concat(YEAR(calendar_date), MONTH(calendar_date))) AS YearMonth
+FROM Sold Order by YEAR(calendar_date) ASC, MONTH(calendar_date) ASC;
+SELECT table2.category_name, state, NumUnitSold
+FROM
+(SELECT category_name, MAX(TotalNum) AS NumUnitSold FROM
+(SELECT state, category_name, SUM(quantity_sold) AS TotalNum
+FROM Sold NATURAL JOIN Belong NATURAL JOIN Store NATURAL JOIN City
+WHERE concat(YEAR(calendar_date), MONTH(calendar_date)) = %s
+GROUP BY state, category_name
+ORDER BY category_name, TotalNum DESC
+) AS table1
+GROUP BY category_name
+ORDER BY category_name) AS table2,
+(SELECT state, category_name, SUM(quantity_sold) AS TotalNum
+FROM Sold NATURAL JOIN Belong NATURAL JOIN Store NATURAL JOIN City
+WHERE concat(YEAR(calendar_date), MONTH(calendar_date)) = %s
+GROUP BY state, category_name
+ORDER BY category_name, TotalNum DESC
+) AS table3
+WHERE table2.category_name = table3.category_name AND table2.NumUnitSold = table3.TotalNum;
+
+
+Report 7: revenue_by_population.sql
+
+CREATE OR REPLACE VIEW City_Category
+                    AS SELECT state, city_name,
+                    CASE
+                    WHEN city_population < 3700000 THEN 'Small'
+                    WHEN city_population < 6700000 THEN 'Medium'
+                    WHEN city_population < 9000000 THEN 'Large'
+                    ELSE 'Extra Large'
+                    END AS CityCategory
+                    FROM City;
+CREATE  OR REPLACE VIEW RevenueByPopulation AS
+                    SELECT Year, CityCategory, SUM(Quantity*SoldPrice*SpecialSavingsDayDiscount) AS TotalRevenue
+                    FROM
+                    (SELECT YEAR(calendar_date) AS Year, CityCategory, quantity_sold AS Quantity, IFNULL(discount_price, retail_price) AS SoldPrice, (1-IFNULL(percent_discount/100, 0)) AS SpecialSavingsDayDiscount
+                    FROM (((((Sold NATURAL LEFT JOIN OnSale) NATURAL JOIN Product) NATURAL LEFT JOIN SpecialSavingsDay ) NATURAL JOIN Store) NATURAL JOIN City_Category)
+                    ) AS T
+                    GROUP BY Year, CityCategory
+                    ORDER BY Year, FIELD(CityCategory, 'Small', 'Medium', 'Large', 'Extra Large');            
+ SELECT Year,
+                    SUM(CASE WHEN CityCategory = 'Small' Then TotalRevenue END) AS 'Small',
+                    SUM(CASE WHEN CityCategory = 'Medium' Then TotalRevenue END) AS 'Medium',
+                    SUM(CASE WHEN CityCategory = 'Large' Then TotalRevenue END) AS 'Large',
+                    SUM(CASE WHEN CityCategory = 'Extra Large' Then TotalRevenue END) AS 'Extra Large'
+                    FROM RevenueByPopulation
+                    GROUP BY Year;
+
+
+Report 8: grand_showcase_store_revenue_comparison.sql
+
+
+CREATE OR REPLACE VIEW Store_Sold
+                    AS SELECT store_number, GS_boolean, calendar_date,quantity_sold
+                    FROM Store NATURAL LEFT JOIN Sold;
+-- grandshowcase store data
+CREATE OR REPLACE VIEW GS_Sold AS
+                    SELECT calendar_date, store_number, quantity_sold FROM Store_Sold
+                    WHERE GS_boolean = 1;
+CREATE OR REPLACE VIEW GS_Revenue_data AS
+                    SELECT YEAR(calendar_date) AS Year, store_number,quantity_sold AS Quantity, IFNULL(discount_price, retail_price) AS SoldPrice, IFNULL(percent_discount, 0)/100 AS SpecialSavingsDayDiscount
+                    FROM 
+                    (((GS_Sold NATURAL LEFT JOIN OnSale) NATURAL JOIN Product) NATURAL LEFT JOIN SpecialSavingsDay );
+CREATE OR REPLACE VIEW GS_Revenue AS
+                    SELECT Year, store_number, SUM(Quantity * SoldPrice * (1- SpecialSavingsDayDiscount)) AS TotalRevenue FROM
+                    GS_Revenue_data
+                    GROUP BY Year, store_number
+                    ORDER BY Year;
+-- regular store DATA
+CREATE OR REPLACE VIEW NOGS_Sold AS
+                    SELECT calendar_date, store_number, quantity_sold FROM Store_Sold
+                    WHERE GS_boolean = 0;
+CREATE OR REPLACE VIEW NOGS_Revenue_data AS
+                    SELECT YEAR(calendar_date) AS Year, store_number,quantity_sold AS Quantity, IFNULL(discount_price, retail_price) AS SoldPrice, IFNULL(percent_discount, 0)/100 AS SpecialSavingsDayDiscount
+                    FROM 
+                    (((NOGS_Sold NATURAL LEFT JOIN OnSale) NATURAL JOIN Product) NATURAL LEFT JOIN SpecialSavingsDay );
+CREATE OR REPLACE VIEW Store_Revenue AS
+                    SELECT Year, store_number, SUM(Quantity * SoldPrice * (1- SpecialSavingsDayDiscount)) AS TotalRevenue FROM
+                    NOGS_Revenue_data
+                    GROUP BY Year, store_number
+                    ORDER BY Year;
+-- read two type stores data 
+SELECT Year, COUNT(store_number) AS stores, MIN(TotalRevenue) AS minimum,
+                    AVG(TotalRevenue) AS average, MAX(TotalRevenue) AS maximum, SUM(TotalRevenue) AS total FROM GS_Revenue
+                    GROUP BY Year
+                    ORDER BY Year;
+SELECT Year, COUNT(store_number) AS stores, MIN(TotalRevenue) AS minimum,
+                    AVG(TotalRevenue) AS average, MAX(TotalRevenue) AS maximum, SUM(TotalRevenue) AS total FROM Store_Revenue
+                    GROUP BY Year
+                    ORDER BY Year;
+
+
+
+Report 9: grand_showcase_category_comparison
+
+
+
+select category_name, GS_store, Non_GS_store, GS_store-Non_GS_store AS Difference from
+(select category_name,
+sum(CASE when GS_boolean = 1 then quantity_sold else 0 end) GS_store,
+sum(CASE when GS_boolean = 0 then quantity_sold else 0 end) Non_GS_store
+from
+(select B.PID, B.store_number, B.category_name, B.quantity_sold, store.GS_boolean from
+(select A.PID, category_name, store_number, quantity_sold from 
+(select product.PID, category_name from product, belong
+where product.PID = belong.PID) AS A, sold
+where A.PID = sold.PID) as B, store
+where B.store_number = store.store_number) as C
+group by category_name) AS D
+order by difference desc, category_name asc;
+with myview as 
+(select PID, product_name, GS_store, Non_GS_store, GS_store-Non_GS_store AS difference from
+(select PID, product_name,
+sum(CASE when GS_boolean = 1 then quantity_sold else 0 end) GS_store,
+sum(CASE when GS_boolean = 0 then quantity_sold else 0 end) Non_GS_store 
+from
+(select PID, product_name, category_name, B.store_number, quantity_sold, GS_boolean from
+(select A.PID, product_name, category_name, store_number, quantity_sold from
+(select product.PID, product_name, category_name from product, belong
+where product.PID = belong.PID) AS A, sold 
+where A.PID = sold.PID) AS B, store
+where B.store_number = store.store_number) AS C
+where category_name = %s
+group by PID) AS D)
+
+Select PID, product_name, GS_store, Non_GS_store, difference    
+from
+( 
+(Select *, 1 as filter
+from myview 
+order by difference desc, PID asc
+limit 2) 
+
+Union
+(Select *, 1 as filter
+from myview 
+order by difference asc, PID desc
+limit 2) 
+order by difference desc, PID asc) as F
+order by filter;
+
+
+
+
+Others: store_details
+
+
+SELECT manage.store_number AS "Store Number", street_address AS "Street Address", phone_number AS "Phone Number",    
+CASE GS_boolean
+when 1 then "YES"
+else "No" 
+END "Grand Showcase Store?"
+FROM Manage LEFT JOIN Store ON Manage.store_number = Store.store_number 
+WHERE user_name = %s
+
+
+

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}Revenue by Population{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<h1>Result</h1>
+<table border="1">
+  <thead>
+    <tr>
+      <th>Year</th>
+      <th>Small</th>
+      <th>Medium</th>
+      <th>Large</th>
+      <th>Extra Large</th>
+  </thead>
+  <tbody>
+    {% for row in result %}
+    <tr>
+      {% for d in row %}
+      <td>{{ d }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

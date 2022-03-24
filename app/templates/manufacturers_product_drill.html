@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Manufacturer's Product Drill Down: {{ manufacturer_name }}{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <h1>Result</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>Manufactuer_Name</th>
+      <th>Products_Offered</th>
+      <th>Average_Price</th>
+      <th>Min_Price</th>
+      <th>Max_Price</th>
+    </thead>
+    <tbody>
+    {% for row in summary %}
+      <tr>
+        {% for d in row %}
+	  {% if loop.index == 1 %}
+	    <td><a href="{{ url_for('manufacturers_product.drill', manufacturer_name=d) }}">{{ d }}</a></td>
+	  {% else %}
+            <td>{{ d }}</td>
+	  {% endif %}
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <h1>Drill Down Details</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>Manufacturuer_Name</th>
+      <th>PID</th>
+      <th>Product_Name</th>
+      <th>Price</th>
+      <th>Category_Name</th>
+    </thead>
+    <tbody>
+    {% for row in details %}
+      <tr>
+        {% for d in row %}
+          <td>{{ d }}</td>
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

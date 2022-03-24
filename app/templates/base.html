@@ -1,0 +1,38 @@
+<!doctype html>
+<title>{% block title %}{% endblock %} - CS6400 Summer 2021 | Team 03</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<nav>
+  <h1>CS6400 Summer 2021 | Team 03</h1>
+  <ul>
+    <li><a href="{{ url_for('summary.summary') }}">Home</a></li>
+    {% if g.user and session.get('user_type') == 'marketing_user' %}
+    <li><a href="{{ url_for('city.cities') }}">Update City Population</a></li>
+    {% endif %}
+    {% if g.user %}
+      <li><span>{{ g.user['user_name'] }}</span>
+      <li><a href="{{ url_for('auth.logout') }}">Log Out</a>
+    {% else %}
+      <li><a href="{{ url_for('auth.login') }}">Log In</a>
+    {% endif %}
+  </ul>
+</nav>
+<section class="content">
+  {% if g.user %}
+  <header>
+    {% if session.get('user_type') == 'marketing_user' %}
+    welcome marketing user
+    {% elif session.get('user_type')=='corporate_user' %}
+    welcome corporate user
+    {% else %}
+    welcome store manager
+    {% endif %}
+  </header>
+  {% endif %}
+  <header>
+    {% block header %}{% endblock %}
+  </header>
+  {% for message in get_flashed_messages() %}
+    <div class="flash">{{ message }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</section>

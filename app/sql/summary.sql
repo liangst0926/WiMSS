@@ -1,0 +1,10 @@
+SELECT COUNT(*) FROM City;
+SELECT COUNT(*) FROM Store;
+SELECT COUNT(*) FROM Store WHERE GS_boolean = 1;
+SELECT COUNT(*) FROM Store INNER JOIN Manage ON Store.store_number = Manage.store_number WHERE Manage.user_name = %s;
+SELECT COUNT(*) FROM Manufacturer;
+SELECT COUNT(*) FROM Product;
+SELECT COUNT(*) FROM SpecialSavingsDay;
+SELECT city_name AS City, state AS State, city_population AS Population FROM City;
+SELECT * FROM City WHERE state = %s AND city_name = %s;
+UPDATE City SET city_population = %s WHERE city_name = %s AND state = %s;

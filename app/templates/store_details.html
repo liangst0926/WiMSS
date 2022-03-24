@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Store Details{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <h1>Result</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>Store Number</th>
+      <th>Street Address</th>
+      <th>Phone Number</th>
+      <th>Grand Showcase Store?</th>
+    </thead>
+    <tbody>
+    {% for row in store_details %}
+      <tr>
+        {% for d in row %}
+          <td>{{ d }}</td>
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

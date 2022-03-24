@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}State with Highest Volume for Each Category{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <h1>Select Year and Month</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>YearMonth</th>
+    </thead>
+    <tbody>
+    {% for row in summary %}
+      <tr>
+        {% for d in row %}
+	  {% if loop.index == 1 %}
+	    <td><a href="{{ url_for('state_with_highest_volume_for_each_category.category_report', YearMonth=d) }}">{{ d }}</a></td>
+	  {% else %}
+            <td>{{ d }}</td>
+	  {% endif %}
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <h1>{{ YearMonth }} Report</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>Category_Name</th>
+      <th>State</th>
+      <th>Number of Sold Units</th>
+    </thead>
+    <tbody>
+    {% for row in details %}
+      <tr>
+        {% for d in row %}
+          <td>{{ d }}</td>
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

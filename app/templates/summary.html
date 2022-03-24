@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Summary{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <ul>
+  <li>Number of Stores: {{ num_stores }}</li>
+  <li>Number of Grand Showcase Stores: {{ num_gs_stores }}</li>
+  {% if session.get('user_type') == 'manager' %}
+  <li><a href="{{ url_for('summary.store_details') }}">Number of Stores You Can View: {{ num_viewable_stores }}</a></li>
+  {% endif %}
+  <li>Number of Manufacturers: {{ num_manufacturers }}</li>
+  <li>Number of Products: {{ num_products }}</li>
+  <li>Number of Special Savings Days: {{ num_special_savings_days }} </li>
+  </ul>
+
+{% if session.get('user_type') != 'manager' %}
+<section class="content">
+  <header><h1>Reports</h1></header>
+  <ul>
+    <li><a href="{{ url_for('manufacturers_product.report') }}">Manufacturer's Product</a></li>
+    <li><a href="{{ url_for('category.report') }}">Category</a></li>
+    <li><a href="{{ url_for('actvspredict_revenue_couch_sofa.report') }}">Actual vs Predicted Revenue for Couches and Sofas</a></li>
+    <li><a href="{{ url_for('store_revenue_by_year_by_state.report') }}">Store Revenue by Year by State</a></li>
+    <li><a href="{{ url_for('outdoor_furniture_on_groundhog_day.report') }}">Outdoor Furniture on Groundhog Day</a></li>
+    <li><a href="{{ url_for('state_with_highest_volume_for_each_category.report') }}">State with Highest Volume for Each Category</a></li>
+    <li><a href="{{ url_for('revenue_by_population.report') }}">Revenue by Population</a></li>
+    <li><a href="{{ url_for('grand_showcase_store_revenue_comparison.report') }}">Grand Showcase Store Revenue Comparison</a></li>
+    <li><a href="{{ url_for('grand_showcase_category_comparison.report') }}">Grand Showcase Store Category Comparison</a></li>
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

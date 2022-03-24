@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Actual versus Predicted Revenue for Couches and Sofas{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <h1>Result</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>Product ID</th>
+      <th>Product Name</th>
+      <th>Product Retail Price</th>
+      <th>Total Units Sold</th>
+      <th>Total Units Sold with Discount</th>
+      <th>Total Units Sold at Retail_Price</th>
+      <th>Actual Revenue</th>
+      <th>Predicted Revenue</th>
+      <th>Revenue Difference</th>
+    </thead>
+    <tbody>
+    {% for row in summary %}
+      <tr>
+        {% for d in row %}
+          <td>{{ d }}</td>
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <h4>#Revenue Difference = Predicted Revenue - Actual Revenue</h4>
+{% endblock %}

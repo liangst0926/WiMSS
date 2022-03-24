@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Grand Showcase Category Comparison Drill Down: {{ category_name }}{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <h1>Result</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>Category_Name</th>
+      <th>Grand Showcase Qty</th>
+      <th>Regular Qty</th>
+      <th>Difference</th>
+    </thead>
+    <tbody>
+    {% for row in summary %}
+      <tr>
+        {% for d in row %}
+	  {% if loop.index == 1 %}
+	    <td><a href="{{ url_for('grand_showcase_category_comparison.drill', category_name=d) }}">{{ d }}</a></td>
+	  {% else %}
+            <td>{{ d }}</td>
+	  {% endif %}
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <h1>Drill Down Details (Top 5 and Bottom 5)</h1>
+  <table border="1">
+    <thead>
+    <tr>
+      <th>Product ID</th>
+      <th>Product Name</th>
+      <th>Grand Showcase Qty</th>
+      <th>Regular Qty</th>
+      <th>Difference</th>
+    </thead>
+    <tbody>
+    {% for row in details %}
+      <tr>
+        {% for d in row %}
+          <td>{{ d }}</td>
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
